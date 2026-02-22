@@ -73,6 +73,12 @@ jobs:
           node-version: "24.1.0"
           cache: "pnpm"
 
+      - name: Setup dotnet
+        if: matrix.os == 'windows'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
       - name: Install Vulkan SDK
         if: matrix.os == 'windows'
         uses: humbletim/install-vulkan-sdk@v1.2
@@ -181,11 +187,18 @@ jobs:
         if: matrix.os == 'windows'
         shell: bash
         run: |
-          cd apps/desktop/out/make/squirrel.windows/${{ matrix.arch }}
-          for exe in *.exe; do
-            mv "$exe" "Amical-windows-${{ matrix.arch }}.exe"
-            echo "Renamed $exe → Amical-windows-${{ matrix.arch }}.exe"
-          done
+          # The path might be squirrel.windows/x64 or just squirrel.windows
+          # We'll search for the .exe and rename it
+          find apps/desktop/out/make/squirrel.windows -name "*.exe" -maxdepth 2 -exec bash -c '
+            for file; do
+              dir=$(dirname "$file")
+              base=$(basename "$file")
+              if [[ "$base" != Amical-windows-${{ matrix.arch }}.exe ]]; then
+                mv "$file" "$dir/Amical-windows-${{ matrix.arch }}.exe"
+                echo "Renamed $file → $dir/Amical-windows-${{ matrix.arch }}.exe"
+              fi
+            done
+          ' bash {} +
 
       - name: Upload artifacts (macOS)
         if: matrix.os == 'macos'
@@ -202,9 +215,9 @@ jobs:
         with:
           name: windows-${{ matrix.arch }}
           path: |
-            apps/desktop/out/make/squirrel.windows/${{ matrix.arch }}/Amical-windows-${{ matrix.arch }}.exe
-            apps/desktop/out/make/squirrel.windows/${{ matrix.arch }}/*.nupkg
-            apps/desktop/out/make/squirrel.windows/${{ matrix.arch }}/RELEASES
+            apps/desktop/out/make/squirrel.windows/**/Amical-windows-${{ matrix.arch }}.exe
+            apps/desktop/out/make/squirrel.windows/**/*.nupkg
+            apps/desktop/out/make/squirrel.windows/**/RELEASES
 
   release:
     name: Create Release

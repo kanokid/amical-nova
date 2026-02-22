@@ -271,6 +271,7 @@ for (const variant of variants) {
   propagateCMakeBool("GGML_OPENBLAS");
   propagateCMakeBool("GGML_BLAS");
   propagateCMakeBool("GGML_USE_ACCELERATE");
+  propagateCMakeBool("GGML_OPENMP");
 
   run(cmakeParts.join(" "), {
     cwd: addonDir,
