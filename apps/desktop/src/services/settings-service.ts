@@ -236,6 +236,25 @@ export class SettingsService extends EventEmitter {
   }
 
   /**
+   * Get Deepgram configuration
+   */
+  async getDeepgramConfig(): Promise<{ apiKey: string } | undefined> {
+    const config = await this.getModelProvidersConfig();
+    return config?.deepgram;
+  }
+
+  /**
+   * Update Deepgram configuration
+   */
+  async setDeepgramConfig(config: { apiKey: string }): Promise<void> {
+    const currentConfig = await this.getModelProvidersConfig();
+    await this.setModelProvidersConfig({
+      ...currentConfig,
+      deepgram: config,
+    });
+  }
+
+  /**
    * Get default speech model (Whisper)
    */
   async getDefaultSpeechModel(): Promise<string | undefined> {

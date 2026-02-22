@@ -24,8 +24,8 @@ import SyncModelsDialog from "./sync-models-dialog";
 import { useTranslation } from "react-i18next";
 
 interface ProviderAccordionProps {
-  provider: "OpenRouter" | "Ollama";
-  modelType: "language" | "embedding";
+  provider: "OpenRouter" | "Ollama" | "Deepgram";
+  modelType: "language" | "embedding" | "speech";
 }
 
 export default function ProviderAccordion({
@@ -33,10 +33,14 @@ export default function ProviderAccordion({
   modelType,
 }: ProviderAccordionProps) {
   const { t } = useTranslation();
-  const providerLabel =
-    provider === "OpenRouter"
-      ? t("settings.aiModels.providers.openRouter")
-      : t("settings.aiModels.providers.ollama");
+  let providerLabel = "";
+  if (provider === "OpenRouter") {
+    providerLabel = t("settings.aiModels.providers.openRouter");
+  } else if (provider === "Ollama") {
+    providerLabel = t("settings.aiModels.providers.ollama");
+  } else if (provider === "Deepgram") {
+    providerLabel = "Deepgram";
+  }
 
   // Local state
   const [status, setStatus] = useState<"connected" | "disconnected">(
@@ -85,6 +89,25 @@ export default function ProviderAccordion({
     },
     onError: (error) => {
       console.error("Failed to save Ollama config:", error);
+      toast.error(
+        t("settings.aiModels.provider.toast.configSaveFailed", {
+          provider: providerLabel,
+        }),
+      );
+    },
+  });
+
+  const setDeepgramConfigMutation = api.settings.setDeepgramConfig.useMutation({
+    onSuccess: () => {
+      toast.success(
+        t("settings.aiModels.provider.toast.configSaved", {
+          provider: providerLabel,
+        }),
+      );
+      utils.settings.getModelProvidersConfig.invalidate();
+    },
+    onError: (error) => {
+      console.error("Failed to save Deepgram config:", error);
       toast.error(
         t("settings.aiModels.provider.toast.configSaveFailed", {
           provider: providerLabel,
@@ -236,6 +259,14 @@ export default function ProviderAccordion({
           setInputValue("");
           setStatus("disconnected");
         }
+      } else if (provider === "Deepgram") {
+        if (config.deepgram?.apiKey) {
+          setInputValue(config.deepgram.apiKey);
+          setStatus("connected");
+        } else {
+          setInputValue("");
+          setStatus("disconnected");
+        }
       }
     }
   }, [modelProvidersConfigQuery.data, provider]);
@@ -249,8 +280,13 @@ export default function ProviderAccordion({
 
     if (provider === "OpenRouter") {
       validateOpenRouterMutation.mutate({ apiKey: inputValue.trim() });
-    } else {
+    } else if (provider === "Ollama") {
       validateOllamaMutation.mutate({ url: inputValue.trim() });
+    } else if (provider === "Deepgram") {
+      // No validation endpoint for Deepgram yet, just save it
+      setDeepgramConfigMutation.mutate({ apiKey: inputValue.trim() });
+      setIsValidating(false);
+      setStatus("connected");
     }
   };
 
@@ -267,8 +303,18 @@ export default function ProviderAccordion({
   const confirmRemoveProvider = () => {
     if (provider === "OpenRouter") {
       removeOpenRouterProviderMutation.mutate();
-    } else {
+    } else if (provider === "Ollama") {
       removeOllamaProviderMutation.mutate();
+    } else if (provider === "Deepgram") {
+      // Just clear the key
+      setDeepgramConfigMutation.mutate({ apiKey: "" });
+      setStatus("disconnected");
+      setInputValue("");
+      toast.success(
+        t("settings.aiModels.provider.toast.removed", {
+          provider: providerLabel,
+        }),
+      );
     }
     setRemoveProviderDialogOpen(false);
   };
@@ -304,13 +350,17 @@ export default function ProviderAccordion({
   const getPlaceholder = () => {
     if (provider === "OpenRouter") {
       return t("settings.aiModels.provider.placeholders.openRouter");
+    } else if (provider === "Deepgram") {
+      return "Deepgram API Key";
     } else {
       return t("settings.aiModels.provider.placeholders.ollama");
     }
   };
 
   const getInputType = () => {
-    return provider === "OpenRouter" ? "password" : "text";
+    return provider === "OpenRouter" || provider === "Deepgram"
+      ? "password"
+      : "text";
   };
 
   return (
@@ -349,9 +399,11 @@ export default function ProviderAccordion({
               </Button>
             ) : (
               <div className="flex gap-2">
-                <Button variant="outline" onClick={openSyncDialog}>
-                  {t("settings.aiModels.provider.buttons.syncModels")}
-                </Button>
+                {provider !== "Deepgram" && (
+                  <Button variant="outline" onClick={openSyncDialog}>
+                    {t("settings.aiModels.provider.buttons.syncModels")}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={openRemoveProviderDialog}
@@ -369,12 +421,14 @@ export default function ProviderAccordion({
       </AccordionItem>
 
       {/* Sync Models Dialog */}
-      <SyncModelsDialog
-        open={syncDialogOpen}
-        onOpenChange={setSyncDialogOpen}
-        provider={provider}
-        modelType={modelType}
-      />
+      {provider !== "Deepgram" && modelType !== "speech" && (
+        <SyncModelsDialog
+          open={syncDialogOpen}
+          onOpenChange={setSyncDialogOpen}
+          provider={provider as "OpenRouter" | "Ollama"}
+          modelType={modelType as "language" | "embedding"}
+        />
+      )}
 
       {/* Remove Provider Confirmation Dialog */}
       <Dialog

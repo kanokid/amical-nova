@@ -149,6 +149,37 @@ export const AVAILABLE_MODELS: AvailableWhisperModel[] = [
     providerIcon: "/assets/logo.svg",
   },
   {
+    id: "deepgram-nova-3",
+    name: "Deepgram Nova-3",
+    type: "whisper", // Reusing 'whisper' type as it is a speech model
+    description: "Deepgram's fastest and most accurate model.",
+    checksum: "",
+    filename: "",
+    downloadUrl: "",
+    size: 0,
+    sizeFormatted: "Cloud",
+    modelSize: "Cloud",
+    features: [
+      {
+        icon: "cloud",
+        tooltip: "Cloud-based processing",
+      },
+      {
+        icon: "rocket",
+        tooltip: "Extremely fast transcription",
+      },
+      {
+        icon: "award",
+        tooltip: "Highest accuracy",
+      },
+    ],
+    speed: 5.0,
+    accuracy: 4.8,
+    setup: "cloud",
+    provider: "Deepgram",
+    providerIcon: "/icons/models/deepgram.svg", // Assuming this icon exists or will use fallback
+  },
+  {
     id: "whisper-tiny",
     name: "Whisper Tiny",
     type: "whisper",

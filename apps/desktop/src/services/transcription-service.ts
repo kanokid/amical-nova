@@ -8,6 +8,7 @@ import {
 import { createDefaultContext } from "../pipeline/core/context";
 import { WhisperProvider } from "../pipeline/providers/transcription/whisper-provider";
 import { AmicalCloudProvider } from "../pipeline/providers/transcription/amical-cloud-provider";
+import { DeepgramProvider } from "../pipeline/providers/transcription/deepgram-provider";
 import { OpenRouterProvider } from "../pipeline/providers/formatting/openrouter-formatter";
 import { OllamaFormatter } from "../pipeline/providers/formatting/ollama-formatter";
 import { ModelService } from "../services/model-service";
@@ -37,6 +38,7 @@ import * as fs from "node:fs";
 export class TranscriptionService {
   private whisperProvider: WhisperProvider;
   private cloudProvider: AmicalCloudProvider;
+  private deepgramProvider: DeepgramProvider;
   private currentProvider: TranscriptionProvider | null = null;
   private streamingSessions = new Map<string, StreamingSession>();
   private vadService: VADService | null;
@@ -59,6 +61,7 @@ export class TranscriptionService {
   ) {
     this.whisperProvider = new WhisperProvider(modelService);
     this.cloudProvider = new AmicalCloudProvider();
+    this.deepgramProvider = new DeepgramProvider(settingsService);
     this.vadService = vadService;
     this.settingsService = settingsService;
     this.vadMutex = new Mutex();
@@ -87,6 +90,12 @@ export class TranscriptionService {
     if (model?.provider === "Amical Cloud") {
       this.currentProvider = this.cloudProvider;
       return this.cloudProvider;
+    }
+
+    // Use Deepgram provider
+    if (model?.provider === "Deepgram") {
+      this.currentProvider = this.deepgramProvider;
+      return this.deepgramProvider;
     }
 
     // Default to whisper for all other models

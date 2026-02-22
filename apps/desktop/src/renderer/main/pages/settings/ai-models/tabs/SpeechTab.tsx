@@ -51,6 +51,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Accordion } from "@/components/ui/accordion";
+import ProviderAccordion from "../components/provider-accordion";
 import { DownloadProgress } from "@/constants/models";
 import { api } from "@/trpc/react";
 import { useTranslation } from "react-i18next";
@@ -412,6 +414,16 @@ export default function SpeechTab() {
             modelType="speech"
             title={t("settings.aiModels.defaultModels.speech")}
           />
+
+          <div>
+            <Label className="text-lg font-semibold mb-2 block">
+              {t("settings.aiModels.providers.title") || "Providers"}
+            </Label>
+            <Accordion type="multiple" className="w-full">
+              <ProviderAccordion provider="Deepgram" modelType="speech" />
+            </Accordion>
+          </div>
+
           <div>
             <Label className="text-lg font-semibold mb-2 block">
               {t("settings.aiModels.speech.availableModels")}

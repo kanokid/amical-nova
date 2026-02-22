@@ -154,6 +154,9 @@ export interface AppSettingsData {
     ollama?: {
       url: string;
     };
+    deepgram?: {
+      apiKey: string;
+    };
     defaultSpeechModel?: string; // Model ID for default speech model (Whisper)
     defaultLanguageModel?: string; // Model ID for default language model
     defaultEmbeddingModel?: string; // Model ID for default embedding model

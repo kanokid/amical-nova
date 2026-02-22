@@ -35,9 +35,14 @@ const OllamaConfigSchema = z.object({
   url: z.string().url().or(z.literal("")),
 });
 
+const DeepgramConfigSchema = z.object({
+  apiKey: z.string(),
+});
+
 const ModelProvidersConfigSchema = z.object({
   openRouter: OpenRouterConfigSchema.optional(),
   ollama: OllamaConfigSchema.optional(),
+  deepgram: DeepgramConfigSchema.optional(),
 });
 
 const DictationSettingsSchema = z.object({
@@ -545,6 +550,33 @@ export const settingsRouter = createRouter({
         const logger = ctx.serviceManager.getLogger();
         if (logger) {
           logger.main.error("Error setting Ollama config:", error);
+        }
+        throw error;
+      }
+    }),
+
+  // Set Deepgram configuration
+  setDeepgramConfig: procedure
+    .input(DeepgramConfigSchema)
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const settingsService =
+          ctx.serviceManager.getService("settingsService");
+        if (!settingsService) {
+          throw new Error("SettingsService not available");
+        }
+        await settingsService.setDeepgramConfig(input);
+
+        const logger = ctx.serviceManager.getLogger();
+        if (logger) {
+          logger.main.info("Deepgram configuration updated");
+        }
+
+        return true;
+      } catch (error) {
+        const logger = ctx.serviceManager.getLogger();
+        if (logger) {
+          logger.main.error("Error setting Deepgram config:", error);
         }
         throw error;
       }
