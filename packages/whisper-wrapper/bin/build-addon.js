@@ -31,8 +31,16 @@ if (!fs.existsSync(addonDir) || !fs.existsSync(whisperDir)) {
   process.exit(1);
 }
 
-const buildDir = path.join(pkgDir, "build");
-if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir);
+let buildDir = path.join(pkgDir, "build");
+
+// On Windows CI, use a shorter build path to avoid MAX_PATH issues (CMake generates deep paths)
+if (process.platform === "win32" && process.env.CI) {
+  const tempBase = process.env.RUNNER_TEMP || require("os").tmpdir();
+  buildDir = path.join(tempBase, "w-build");
+  console.log(`[build-addon] Using short build directory: ${buildDir}`);
+}
+
+if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
 
 const cacheDir = path.join(pkgDir, ".cmake-js");
 if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
@@ -256,6 +264,12 @@ for (const variant of variants) {
     "-T whisper_node",
     "--CD node_runtime=node",
   ];
+
+  // Limit parallelism on CI to prevent OOM errors during heavy compilation (e.g. ggml.cpp)
+  if (process.env.CI) {
+    console.log("[build-addon] CI environment detected, limiting parallelism to 1 job.");
+    cmakeParts.push("--parallel 1");
+  }
 
   const propagateCMakeBool = (key) => {
     const value = env[key];
