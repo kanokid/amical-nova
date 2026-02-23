@@ -1,4 +1,4 @@
-"use client";
+lso"use client";
 import { ComponentProps, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -458,11 +458,15 @@ export default function SpeechTab() {
                         const progress = downloadProgress[model.id];
                         const isDownloading =
                           progress?.status === "downloading";
-                        const isCloudModel = model.provider === "Amical Cloud";
+                        const isCloudModel = model.setup === "cloud";
+                        const isAmicalCloud = model.provider === "Amical Cloud";
 
-                        // Cloud models can be selected if authenticated, local models need to be downloaded
+                        // Cloud models can be selected if authenticated (for Amical Cloud) or always (for others like Deepgram)
+                        // Local models need to be downloaded
                         const canSelect = isCloudModel
-                          ? (isAuthenticated ?? false)
+                          ? isAmicalCloud
+                            ? (isAuthenticated ?? false)
+                            : true
                           : isDownloaded && isTranscriptionAvailable;
 
                         return (
@@ -502,7 +506,7 @@ export default function SpeechTab() {
                                     </Avatar>
                                     <span>{model.provider}</span>
                                   </div>
-                                  {isCloudModel && (
+                                  {isAmicalCloud && (
                                     <div className="mt-1">
                                       <Tooltip>
                                         <TooltipTrigger asChild>
@@ -562,20 +566,30 @@ export default function SpeechTab() {
                                 {/* Cloud models show cloud icon or login button */}
                                 {isCloudModel && (
                                   <>
-                                    {isAuthenticated ? (
+                                    {isAmicalCloud ? (
+                                      <>
+                                        {isAuthenticated ? (
+                                          <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                            <Cloud className="w-4 h-4 text-blue-500" />
+                                          </div>
+                                        ) : (
+                                          <button
+                                            onClick={() =>
+                                              setShowLoginDialog(true)
+                                            }
+                                            className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center text-white transition-colors"
+                                            title={t(
+                                              "settings.aiModels.speech.cloudFormatting.signInTitle",
+                                            )}
+                                          >
+                                            <LogIn className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                      </>
+                                    ) : (
                                       <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
                                         <Cloud className="w-4 h-4 text-blue-500" />
                                       </div>
-                                    ) : (
-                                      <button
-                                        onClick={() => setShowLoginDialog(true)}
-                                        className="w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center text-white transition-colors"
-                                        title={t(
-                                          "settings.aiModels.speech.cloudFormatting.signInTitle",
-                                        )}
-                                      >
-                                        <LogIn className="w-4 h-4" />
-                                      </button>
                                     )}
                                   </>
                                 )}
